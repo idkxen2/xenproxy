@@ -1,253 +1,453 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proxy Renderer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0e0e11;
-      --fg: #e8e6e3;
-      --accent: #00e09e;
-      --muted: #555;
-      --card: #16161a;
-      --border: #2a2a2e;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #000000;
+            --sidebar-color: #030303;
+            --accent-color: #7209b7;
+            --accent-hover: #9d4edd;
+            --text-color: #ffffff;
+            --sub-text: #555555;
+            --card-bg: #080808;
+            --border-color: #1a1a1a;
+            --input-bg: #0a0a0a;
+            --transition-speed: 0.3s;
+        }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+        }
 
-    /* Top bar */
-    .topbar {
-      width: 100%;
-      padding: 16px 24px;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+        #snow-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1; overflow: hidden;
+        }
+        .snow-dot {
+            position: absolute; top: -10px; background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%; user-select: none; animation: fall linear infinite;
+        }
+        @keyframes fall { to { transform: translateY(110vh); } }
 
-    .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: pulse 1.6s ease-in-out infinite;
-    }
+        .sidebar {
+            width: 80px; height: 100%; background-color: var(--sidebar-color);
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 30px; border-right: 1px solid var(--border-color);
+            transition: width var(--transition-speed); z-index: 10;
+            flex-shrink: 0;
+        }
+        .sidebar:hover { width: 240px; }
 
-    .dot.error { background: #ff4466; animation: none; }
-    .dot.done  { background: var(--accent); animation: none; }
+        .logo {
+            color: var(--accent-color); font-size: 1.5rem; margin-bottom: 40px;
+            display: flex; align-items: center; justify-content: center; width: 100%;
+            white-space: nowrap; overflow: hidden;
+        }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: .4; transform: scale(.8); }
-    }
+        .nav-item {
+            width: 90%; height: 55px; display: flex; align-items: center;
+            padding-left: 15px; cursor: pointer; transition: 0.3s;
+            color: var(--sub-text); border-radius: 30px; margin-bottom: 5px;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-color); background: rgba(255,255,255,0.05);
+        }
+        .nav-item i { width: 30px; font-size: 1.2rem; text-align: center; }
+        .nav-text { margin-left: 15px; opacity: 0; white-space: nowrap; transition: 0.2s; }
+        .sidebar:hover .nav-text { opacity: 1; }
 
-    .topbar span {
-      font-size: 14px;
-      color: var(--muted);
-    }
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; z-index: 10; }
+        .top-bar {
+            height: 70px; flex-shrink: 0; border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; padding: 0 40px;
+            justify-content: space-between; background: var(--bg-color);
+        }
 
-    .topbar a {
-      font-size: 13px;
-      color: var(--accent);
-      text-decoration: none;
-      margin-left: auto;
-      opacity: .7;
-      transition: opacity .2s;
-    }
-    .topbar a:hover { opacity: 1; }
+        .status-indicator { font-size: 0.8rem; color: var(--accent-color); display: flex; align-items: center; gap: 10px; }
+        .pulse {
+            width: 8px; height: 8px; background: var(--accent-color);
+            border-radius: 50%; box-shadow: 0 0 8px var(--accent-color);
+            animation: pulseAnim 1s infinite;
+        }
+        @keyframes pulseAnim { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-    /* Loading state */
-    .loader {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-    }
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .tab { display: none; animation: fadeUp 0.4s ease; }
+        .tab.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .spinner {
-      width: 48px; height: 48px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
+        .search-wrapper { max-width: 800px; margin: 5vh auto; text-align: center; }
+        .dashboard-info { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; color: var(--sub-text); font-size: 1.1rem; }
+        
+        .search-bar {
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 50px; height: 60px; display: flex; align-items: center;
+            padding: 0 30px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .search-bar:focus-within { border-color: var(--accent-color); }
+        .search-bar input { background: transparent; border: none; color: white; flex: 1; font-size: 1.1rem; outline: none; margin-left: 15px; }
+        .search-bar button { background: transparent; border: none; color: var(--sub-text); cursor: pointer; font-size: 1.2rem; }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+        .frame-container {
+            width: 100%; height: calc(100vh - 150px); background: #000;
+            border-radius: 24px; overflow: hidden; position: relative;
+            display: none; border: 1px solid var(--border-color);
+        }
+        iframe { width: 100%; height: 100%; border: none; background: white; }
 
-    .loader p {
-      font-size: 15px;
-      color: var(--muted);
-    }
+        .frame-controls { position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 10; }
+        .frame-btn { color: white; border: none; padding: 8px 16px; border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-close { background: #b91c1c; }
+        .btn-blank { background: var(--accent-color); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+        .card {
+            background: var(--card-bg); border-radius: 24px; overflow: hidden;
+            text-align: center; cursor: pointer; transition: 0.3s; position: relative; height: 250px;
+        }
+        .card:hover { transform: translateY(-8px); border-color: var(--accent-color); }
+        .card-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: 0.3s; }
+        .card:hover .card-img { opacity: 1; transform: scale(1.05); }
+        .card-title { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #000 20%, transparent); padding: 20px 10px; color: white; font-weight: bold; }
 
-    /* Error state */
-    .error-state {
-      flex: 1;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 40px;
-      text-align: center;
-    }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); margin-bottom: 20px; max-width: 650px; }
+        .toggle-btn { background: #111; color: white; border: 1px solid var(--border-color); padding: 8px 20px; border-radius: 30px; cursor: pointer; }
+        .toggle-btn.active { background: var(--accent-color); }
+        .filter-select { background: #111; color: white; border: 1px solid var(--border-color); padding: 10px; border-radius: 30px; outline: none; width: 200px; }
 
-    .error-state h2 {
-      font-size: 22px;
-      color: #ff4466;
-    }
+        #panic-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: white; z-index: 10000; display: none;
+        }
 
-    .error-state p {
-      font-size: 14px;
-      color: var(--muted);
-      max-width: 500px;
-      line-height: 1.6;
-    }
-
-    .error-state button {
-      margin-top: 8px;
-      padding: 10px 28px;
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .15s, box-shadow .15s;
-    }
-
-    .error-state button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(0, 224, 158, .25);
-    }
-
-    /* Rendered content container */
-    #render-target {
-      width: 100%;
-      flex: 1;
-      display: none;
-    }
-
-    #render-target iframe {
-      width: 100%;
-      height: 100vh;
-      border: none;
-      display: block;
-    }
-  </style>
+        #error-page {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: default;
+            user-select: none;
+        }
+        #error-page .err-icon {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: #2a2a2a;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 28px;
+        }
+        #error-page .err-icon i { font-size: 32px; color: #666; }
+        #error-page h2 { color: #ccc; font-size: 22px; font-weight: 400; margin-bottom: 10px; }
+        #error-page p { color: #666; font-size: 14px; max-width: 460px; text-align: center; line-height: 1.6; }
+    </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="dot" id="status-dot"></div>
-    <span id="status-text">Fetching content…</span>
-    <a href="https://github.com/idkxen2/xenproxy/blob/main/index.html" target="_blank" rel="noopener">View source</a>
-  </div>
+    <div id="snow-container"></div>
 
-  <div class="loader" id="loader">
-    <div class="spinner"></div>
-    <p>Retrieving remote page…</p>
-  </div>
+    <div id="error-page">
+        <div class="err-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h2>This site can't be reached</h2>
+        <p>www.education-learning-platform.com's server IP address could not be found. Try checking your internet connection and DNS settings.</p>
+    </div>
 
-  <div class="error-state" id="error-state">
-    <h2>Failed to load</h2>
-    <p id="error-msg">Could not fetch the remote content. This might be due to a network issue or CORS restrictions on the source.</p>
-    <button onclick="fetchAndRender()">Retry</button>
-  </div>
+    <div id="panic-overlay">
+        <iframe src="https://classroom.google.com" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
 
-  <div id="render-target">
-    <iframe id="content-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-  </div>
+    <nav class="sidebar" id="app-sidebar" style="display:none;">
+        <div class="logo">
+            <i class="fa-solid fa-yin-yang"></i>
+        </div>
+        <div class="nav-item active" onclick="setTab('home')">
+            <i class="fa-solid fa-globe"></i>
+            <span class="nav-text">Browser</span>
+        </div>
+        <div class="nav-item" onclick="setTab('games')">
+            <i class="fa-solid fa-gamepad"></i>
+            <span class="nav-text">Games</span>
+        </div>
+        <div class="nav-item" onclick="setTab('settings')">
+            <i class="fa-solid fa-shield-virus"></i>
+            <span class="nav-text">Security</span>
+        </div>
+    </nav>
 
-  <script>
-    const SOURCE_URL = 'https://raw.githubusercontent.com/idkxen2/xenproxy/refs/heads/main/index.html';
+    <div class="main" id="app-main" style="display:none;">
+        <div class="top-bar">
+            <div class="status-indicator">
+                <div class="pulse"></div>
+                <span id="process-monitor">Stealth Mode Active</span>
+            </div>
+            <div style="color: var(--sub-text); font-size: 0.9rem;">
+                Engine: <span style="color: var(--text-color);">Google Secure</span>
+            </div>
+        </div>
 
-    const statusDot   = document.getElementById('status-dot');
-    const statusText  = document.getElementById('status-text');
-    const loader      = document.getElementById('loader');
-    const errorState  = document.getElementById('error-state');
-    const errorMsg    = document.getElementById('error-msg');
-    const renderTarget = document.getElementById('render-target');
-    const contentFrame = document.getElementById('content-frame');
+        <div class="content-area">
+            
+            <div id="home" class="tab active">
+                <div class="search-wrapper" id="search-ui">
+                    <h1 style="margin-bottom: 10px;">Xen</h1>
+                    <p style="color: var(--sub-text); margin-bottom: 30px;">Encrypted Google Instance</p>
+                    
+                    <div class="dashboard-info">
+                        <span id="time-display"><i class="fa-regular fa-clock"></i> --:-- --</span>
+                        <span id="battery-display"><i class="fa-solid fa-battery-half"></i> --%</span>
+                    </div>
 
-    function showLoader() {
-      loader.style.display = 'flex';
-      errorState.style.display = 'none';
-      renderTarget.style.display = 'none';
-      statusDot.className = 'dot';
-      statusText.textContent = 'Fetching content…';
-    }
+                    <div class="search-bar">
+                        <i class="fa-brands fa-google"></i>
+                        <input type="text" id="url-input" placeholder="Search Google or enter URL..." autocomplete="off">
+                        <button onclick="executeProxy()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                    <p style="color: #444; font-size: 0.8rem; margin-top: 15px;">Press [ESC] to Panic Hide</p>
+                </div>
 
-    function showError(msg) {
-      loader.style.display = 'none';
-      errorState.style.display = 'flex';
-      renderTarget.style.display = 'none';
-      statusDot.className = 'dot error';
-      statusText.textContent = 'Error';
-      if (msg) errorMsg.textContent = msg;
-    }
+                <div class="frame-container" id="browser-view">
+                    <div class="frame-controls">
+                        <button class="frame-btn btn-blank" onclick="openFrameInBlank()">
+                            <i class="fa-solid fa-mask"></i> Cloak Tab
+                        </button>
+                        <button class="frame-btn btn-close" onclick="closeFrame()">
+                            <i class="fa-solid fa-xmark"></i> Close
+                        </button>
+                    </div>
+                    <iframe id="proxy-frame" src=""></iframe>
+                </div>
+            </div>
 
-    function showContent(html) {
-      loader.style.display = 'none';
-      errorState.style.display = 'none';
-      renderTarget.style.display = 'block';
-      statusDot.className = 'dot done';
-      statusText.textContent = 'Rendered';
+            <div id="games" class="tab">
+                <h2 style="margin-bottom: 20px;">Secure Library</h2>
+                <div class="grid">
+                    <div class="card" onclick="launchGame('https://hianime.to/')">
+                        <img src="https://cdn2.steamgriddb.com/grid/d4b0d38ac177563362dc85001c9e7b0d.jpg" class="card-img">
+                        <div class="card-title">HiAnime</div>
+                    </div>
+                    <div class="card" onclick="launchGame('https://eaglercraft.com/play/?version=1.8.8-wasm')">
+                        <img src="https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000000964/a28a81253e919298beab2295e39a56b7a5140ef15abdb56135655e5c221b2a3a" class="card-img">
+                        <div class="card-title">Eaglercraft</div>
+                    </div>
+                    <div class="card" onclick="launchGame('https://1games.io/hollow-knight')">
+                        <img src="https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch/70010000003208/4643fb058642335c523910f3a7910575f56372f612f7c0c9a497aaae978d3e51" class="card-img">
+                        <div class="card-title">Hollow Knight</div>
+                    </div>
+                    <div class="card" onclick="launchGame('https://geometry-game.io/data/image/game/geometry-dash/dashmetry.png')">
+                        <img src="https://geometry-game.io/data/image/game/geometry-dash/dashmetry.png" class="card-img" style="object-fit: contain;">
+                        <div class="card-title">Dashmetry</div>
+                    </div>
+                </div>
+            </div>
 
-      /* Write the fetched HTML into the sandboxed iframe so its scripts/styles
-         are scoped and don't conflict with this host page. */
-      const doc = contentFrame.contentDocument || contentFrame.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-    }
+            <div id="settings" class="tab">
+                <h2 style="margin-bottom: 20px;">Security Configuration</h2>
+                
+                <div class="setting-row">
+                    <div>
+                        <h3>Tab Cloaker</h3>
+                        <p style="color: var(--sub-text); font-size: 0.9rem;">Disguise browser tab identity.</p>
+                    </div>
+                    <select id="cloak-select" class="filter-select" onchange="applyTabCloak(this.value)">
+                        <option value="none">Default</option>
+                        <option value="canvas">Canvas</option>
+                        <option value="classroom">Classroom</option>
+                        <option value="drive">Google Drive</option>
+                        <option value="khan">Khan Academy</option>
+                    </select>
+                </div>
 
-    async function fetchAndRender() {
-      showLoader();
+                <div class="setting-row">
+                    <div>
+                        <h3>Shadow DOM Cloaking</h3>
+                        <p style="color: var(--sub-text); font-size: 0.9rem;">Bypass GoGuardian script injection.</p>
+                    </div>
+                    <button class="toggle-btn active">ALWAYS ON</button>
+                </div>
 
-      try {
-        const resp = await fetch(SOURCE_URL);
+                <div class="setting-row">
+                    <div>
+                        <h3>Referrer Stripping</h3>
+                        <p style="color: var(--sub-text); font-size: 0.9rem;">Stop schools from tracking site sources.</p>
+                    </div>
+                    <button class="toggle-btn active">ALWAYS ON</button>
+                </div>
+            </div>
 
-        if (!resp.ok) {
-          throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+        </div>
+    </div>
+
+    <script>
+        var isUnlocked = false;
+        var unlockCooldown = false;
+        var errorPage = document.getElementById('error-page');
+        var appSidebar = document.getElementById('app-sidebar');
+        var appMain = document.getElementById('app-main');
+
+        function showError() {
+            if (unlockCooldown) return;
+            isUnlocked = false;
+            errorPage.style.display = 'flex';
+            appSidebar.style.display = 'none';
+            appMain.style.display = 'none';
+            document.title = 'Error';
         }
 
-        const html = await resp.text();
-
-        if (!html || html.trim().length === 0) {
-          throw new Error('The fetched resource appears to be empty.');
+        function unlockApp() {
+            isUnlocked = true;
+            errorPage.style.display = 'none';
+            appSidebar.style.display = 'flex';
+            appMain.style.display = 'flex';
+            document.title = 'Xen | Stealth';
+            unlockCooldown = true;
+            setTimeout(function() { unlockCooldown = false; }, 1000);
         }
 
-        showContent(html);
-      } catch (err) {
-        let msg = err.message;
-        if (err instanceof TypeError && msg.includes('fetch')) {
-          msg = 'Network error or CORS restriction prevented the request. Try opening this page from a local server or check your connection.';
-        }
-        showError(msg);
-      }
-    }
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+                e.preventDefault();
+                unlockApp();
+            }
+            if (isUnlocked && e.key === 'Escape') {
+                var overlay = document.getElementById('panic-overlay');
+                if (overlay.style.display === 'block') {
+                    overlay.style.display = 'none';
+                } else {
+                    overlay.style.display = 'block';
+                    document.title = 'Classes';
+                }
+            }
+        });
 
-    /* Kick it off */
-    fetchAndRender();
-  </script>
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && !unlockCooldown) {
+                showError();
+            }
+        });
+
+        function initSnow() {
+            var container = document.getElementById('snow-container');
+            setInterval(function() {
+                if (container.childElementCount > 40) return;
+                var flake = document.createElement('div');
+                flake.className = 'snow-dot';
+                var size = Math.random() * 4 + 2 + 'px';
+                flake.style.width = size;
+                flake.style.height = size;
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                flake.style.opacity = Math.random() * 0.7 + 0.3;
+                container.appendChild(flake);
+                setTimeout(function() { flake.remove(); }, 7000);
+            }, 200);
+        }
+        initSnow();
+
+        function updateStats() {
+            var now = new Date();
+            var hours = now.getHours();
+            var mins = now.getMinutes().toString().padStart(2, '0');
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            var timeEl = document.getElementById('time-display');
+            if (timeEl) timeEl.innerHTML = '<i class="fa-regular fa-clock"></i> ' + hours + ':' + mins + ' ' + ampm;
+            if (navigator.getBattery) {
+                navigator.getBattery().then(function(b) {
+                    var batEl = document.getElementById('battery-display');
+                    if (batEl) batEl.innerHTML = '<i class="fa-solid fa-battery-half"></i> ' + Math.round(b.level * 100) + '%';
+                });
+            }
+        }
+        setInterval(updateStats, 1000);
+        updateStats();
+
+        function setTab(id) {
+            document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+            document.getElementById(id).classList.add('active');
+            var items = document.querySelectorAll('.nav-item');
+            if (id === 'home') items[0].classList.add('active');
+            if (id === 'games') items[1].classList.add('active');
+            if (id === 'settings') items[2].classList.add('active');
+        }
+
+        function closeFrame() {
+            document.getElementById('browser-view').style.display = 'none';
+            document.getElementById('search-ui').style.display = 'block';
+            document.getElementById('proxy-frame').src = '';
+        }
+
+        function openFrameInBlank() {
+            var url = document.getElementById('proxy-frame').src;
+            if (!url) return;
+            var win = window.open('about:blank');
+            win.document.body.style.margin = '0';
+            var ifr = win.document.createElement('iframe');
+            ifr.style = 'width:100vw; height:100vh; border:none;';
+            ifr.src = url;
+            win.document.body.appendChild(ifr);
+        }
+
+        function launchGame(url) {
+            setTab('home');
+            document.getElementById('search-ui').style.display = 'none';
+            document.getElementById('browser-view').style.display = 'block';
+            document.getElementById('proxy-frame').src = url;
+        }
+
+        function executeProxy() {
+            var input = document.getElementById('url-input').value;
+            if (!input) return;
+
+            document.getElementById('search-ui').style.display = 'none';
+            document.getElementById('browser-view').style.display = 'block';
+
+            var targetUrl = '';
+            if (input.includes('.') && !input.includes(' ')) {
+                targetUrl = input.startsWith('http') ? input : 'https://' + input;
+            } else {
+                targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(input) + '&igu=1';
+            }
+
+            var frame = document.getElementById('proxy-frame');
+            var htmlContent = '<!DOCTYPE html><html><head><meta name="referrer" content="no-referrer"><style>body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#fff;}</style></head><body><iframe src="' + targetUrl + '" style="width:100%;height:100%;border:none;" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups"></iframe></body></html>';
+            var blob = new Blob([htmlContent], { type: 'text/html' });
+            frame.src = URL.createObjectURL(blob);
+        }
+
+        var cloaks = {
+            'canvas': { t: 'Dashboard', i: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico' },
+            'classroom': { t: 'Classes', i: 'https://ssl.gstatic.com/classroom/favicon.png' },
+            'drive': { t: 'My Drive', i: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
+            'khan': { t: 'Khan Academy', i: 'https://www.khanacademy.org/favicon.ico' }
+        };
+        function applyTabCloak(v) {
+            if (v === 'none') return;
+            document.title = cloaks[v].t;
+            var l = document.querySelector("link[rel*='icon']") || document.createElement('link');
+            l.rel = 'icon';
+            l.href = cloaks[v].i;
+            document.getElementsByTagName('head')[0].appendChild(l);
+        }
+
+        document.getElementById('url-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') executeProxy();
+        });
+    </script>
 </body>
 </html>
