@@ -54,8 +54,12 @@
         .logo {
             color: var(--accent-color); font-size: 1.5rem; margin-bottom: 40px;
             display: flex; align-items: center; justify-content: center; width: 100%;
-            white-space: nowrap; overflow: hidden;
+            white-space: nowrap; overflow: hidden; flex-direction: row-reverse;
         }
+        .logo .logo-text {
+            margin-right: 15px; opacity: 0; transition: 0.2s; font-weight: bold; font-size: 1.1rem;
+        }
+        .sidebar:hover .logo .logo-text { opacity: 1; }
 
         .nav-item {
             width: 90%; height: 55px; display: flex; align-items: center;
@@ -113,15 +117,24 @@
         .btn-close { background: #b91c1c; }
         .btn-blank { background: var(--accent-color); }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; }
         .card {
-            background: var(--card-bg); border-radius: 24px; overflow: hidden;
-            text-align: center; cursor: pointer; transition: 0.3s; position: relative; height: 250px;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 20px; overflow: hidden;
+            text-align: center; cursor: pointer; transition: all 0.3s; position: relative; height: 200px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 12px;
         }
-        .card:hover { transform: translateY(-8px); border-color: var(--accent-color); }
-        .card-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: 0.3s; }
-        .card:hover .card-img { opacity: 1; transform: scale(1.05); }
-        .card-title { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #000 20%, transparent); padding: 20px 10px; color: white; font-weight: bold; }
+        .card:hover { transform: translateY(-6px); border-color: var(--accent-color); box-shadow: 0 8px 30px rgba(114,9,183,0.15); }
+        .card-icon {
+            width: 64px; height: 64px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; transition: transform 0.3s;
+        }
+        .card:hover .card-icon { transform: scale(1.1); }
+        .card-name {
+            font-size: 0.85rem; font-weight: 600; color: var(--fg); letter-spacing: -0.2px;
+        }
 
         .setting-row { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); margin-bottom: 20px; max-width: 650px; }
         .toggle-btn { background: #111; color: white; border: 1px solid var(--border-color); padding: 8px 20px; border-radius: 30px; cursor: pointer; }
@@ -174,6 +187,7 @@
     <nav class="sidebar" id="app-sidebar" style="display:none;">
         <div class="logo">
             <i class="fa-solid fa-yin-yang"></i>
+            <span class="logo-text">Xen</span>
         </div>
         <div class="nav-item active" onclick="setTab('home')">
             <i class="fa-solid fa-globe"></i>
@@ -236,22 +250,157 @@
             <div id="games" class="tab">
                 <h2 style="margin-bottom: 20px;">Secure Library</h2>
                 <div class="grid">
+
                     <div class="card" onclick="launchGame('https://hianime.to/')">
-                        <img src="https://cdn2.steamgriddb.com/grid/d4b0d38ac177563362dc85001c9e7b0d.jpg" class="card-img">
-                        <div class="card-title">HiAnime</div>
+                        <div class="card-icon" style="background:rgba(255,0,80,0.12);color:#ff0050;"><i class="fa-solid fa-play"></i></div>
+                        <div class="card-name">HiAnime</div>
                     </div>
+
                     <div class="card" onclick="launchGame('https://eaglercraft.com/play/?version=1.8.8-wasm')">
-                        <img src="https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000000964/a28a81253e919298beab2295e39a56b7a5140ef15abdb56135655e5c221b2a3a" class="card-img">
-                        <div class="card-title">Eaglercraft</div>
+                        <div class="card-icon" style="background:rgba(76,175,80,0.12);color:#4caf50;"><i class="fa-solid fa-cubes"></i></div>
+                        <div class="card-name">Eaglercraft</div>
                     </div>
+
                     <div class="card" onclick="launchGame('https://1games.io/hollow-knight')">
-                        <img src="https://assets.nintendo.com/image/upload/c_fill,w_1200/q_auto:best/f_auto/dpr_2.0/store/software/switch/70010000003208/4643fb058642335c523910f3a7910575f56372f612f7c0c9a497aaae978d3e51" class="card-img">
-                        <div class="card-title">Hollow Knight</div>
+                        <div class="card-icon" style="background:rgba(100,140,200,0.12);color:#648cc8;"><i class="fa-solid fa-ghost"></i></div>
+                        <div class="card-name">Hollow Knight</div>
                     </div>
+
                     <div class="card" onclick="launchGame('https://geometry-game.io/data/image/game/geometry-dash/dashmetry.png')">
-                        <img src="https://geometry-game.io/data/image/game/geometry-dash/dashmetry.png" class="card-img" style="object-fit: contain;">
-                        <div class="card-title">Dashmetry</div>
+                        <div class="card-icon" style="background:rgba(255,200,0,0.12);color:#ffc800;"><i class="fa-solid fa-diamond"></i></div>
+                        <div class="card-name">Dashmetry</div>
                     </div>
+
+                    <div class="card" onclick="launchGame('https://retro-bowl.com')">
+                        <div class="card-icon" style="background:rgba(139,90,43,0.15);color:#c49a3c;"><i class="fa-solid fa-football"></i></div>
+                        <div class="card-name">Retro Bowl</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://tetris.com/play-tetris')">
+                        <div class="card-icon" style="background:rgba(0,200,150,0.12);color:#00c896;"><i class="fa-solid fa-shapes"></i></div>
+                        <div class="card-name">Tetris</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-2048')">
+                        <div class="card-icon" style="background:rgba(238,178,40,0.12);color:#eeb228;"><i class="fa-solid fa-table-cells"></i></div>
+                        <div class="card-name">2048</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.chiark.greenend.org.uk/~sgtatham/puzzles/')">
+                        <div class="card-icon" style="background:rgba(180,120,220,0.12);color:#b478dc;"><i class="fa-solid fa-puzzle-piece"></i></div>
+                        <div class="card-name">Puzzles</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://krunker.io')">
+                        <div class="card-icon" style="background:rgba(255,80,60,0.12);color:#ff503c;"><i class="fa-solid fa-crosshairs"></i></div>
+                        <div class="card-name">Krunker</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://surviv.io')">
+                        <div class="card-icon" style="background:rgba(200,160,80,0.12);color:#c8a050;"><i class="fa-solid fa-gun"></i></div>
+                        <div class="card-name">Surviv.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://paper-io.com')">
+                        <div class="card-icon" style="background:rgba(80,180,255,0.12);color:#50b4ff;"><i class="fa-solid fa-pen-nib"></i></div>
+                        <div class="card-name">Paper.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://hole-io.com')">
+                        <div class="card-icon" style="background:rgba(60,60,80,0.15);color:#8888aa;"><i class="fa-solid fa-circle"></i></div>
+                        <div class="card-name">Hole.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://slither.io')">
+                        <div class="card-icon" style="background:rgba(100,200,80,0.12);color:#64c850;"><i class="fa-solid fa-worm"></i></div>
+                        <div class="card-name">Slither.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://cookieclicker.com')">
+                        <div class="card-icon" style="background:rgba(180,120,60,0.15);color:#b4783c;"><i class="fa-solid fa-cookie"></i></div>
+                        <div class="card-name">Cookie Clicker</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-run-3')">
+                        <div class="card-icon" style="background:rgba(0,180,220,0.12);color:#00b4dc;"><i class="fa-solid fa-person-running"></i></div>
+                        <div class="card-name">Run 3</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://zombsroyale.io')">
+                        <div class="card-icon" style="background:rgba(100,220,100,0.12);color:#64dc64;"><i class="fa-solid fa-skull-crossbones"></i></div>
+                        <div class="card-name">ZombsRoyale</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://smashkarts.io')">
+                        <div class="card-icon" style="background:rgba(255,120,60,0.12);color:#ff783c;"><i class="fa-solid fa-karting"></i></div>
+                        <div class="card-name">Smash Karts</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-bloon-tower-defense')">
+                        <div class="card-icon" style="background:rgba(220,60,60,0.12);color:#dc3c3c;"><i class="fa-solid fa-tower-observation"></i></div>
+                        <div class="card-name">Bloons TD</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://venge.io')">
+                        <div class="card-icon" style="background:rgba(200,50,50,0.12);color:#c83232;"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="card-name">Venge.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-fireboy-and-watergirl')">
+                        <div class="card-icon" style="background:rgba(255,100,30,0.12);color:#ff641e;"><i class="fa-solid fa-fire"></i></div>
+                        <div class="card-name">Fireboy & Watergirl</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://mope.io')">
+                        <div class="card-icon" style="background:rgba(120,200,120,0.12);color:#78c878;"><i class="fa-solid fa-paw"></i></div>
+                        <div class="card-name">Mope.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://shellshockers.io')">
+                        <div class="card-icon" style="background:rgba(240,220,180,0.12);color:#f0dcb4;"><i class="fa-solid fa-egg"></i></div>
+                        <div class="card-name">Shell Shockers</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://skribbl.io')">
+                        <div class="card-icon" style="background:rgba(255,200,60,0.12);color:#ffc83c;"><i class="fa-solid fa-paintbrush"></i></div>
+                        <div class="card-name">Skribbl.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://fnf.kdata1.com')">
+                        <div class="card-icon" style="background:rgba(0,200,255,0.12);color:#00c8ff;"><i class="fa-solid fa-music"></i></div>
+                        <div class="card-name">Friday Night Funkin</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://bad-ice-cream.com')">
+                        <div class="card-icon" style="background:rgba(100,180,255,0.12);color:#64b4ff;"><i class="fa-solid fa-ice-cream"></i></div>
+                        <div class="card-name">Bad Ice Cream</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://tankionline.com')">
+                        <div class="card-icon" style="background:rgba(80,160,60,0.12);color:#50a03c;"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="card-name">Tanki Online</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-duck-life')">
+                        <div class="card-icon" style="background:rgba(255,180,40,0.12);color:#ffb428;"><i class="fa-solid fa-dove"></i></div>
+                        <div class="card-name">Duck Life</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://flipline.com/games/papas-freezeria/')">
+                        <div class="card-icon" style="background:rgba(200,100,150,0.12);color:#c86496;"><i class="fa-solid fa-ice-cream"></i></div>
+                        <div class="card-name">Papa's Freezeria</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://vanar.io')">
+                        <div class="card-icon" style="background:rgba(160,80,220,0.12);color:#a050dc;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <div class="card-name">Vanar.io</div>
+                    </div>
+
+                    <div class="card" onclick="launchGame('https://www.coolmathgames.com/0-learn-to-fly')">
+                        <div class="card-icon" style="background:rgba(100,200,255,0.12);color:#64c8ff;"><i class="fa-solid fa-plane"></i></div>
+                        <div class="card-name">Learn to Fly</div>
+                    </div>
+
                 </div>
             </div>
 
