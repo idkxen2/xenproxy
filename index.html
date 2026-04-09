@@ -1,1 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proxy Renderer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --fg: #e8e6e3;
+      --accent: #00e09e;
+      --muted: #555;
+      --card: #16161a;
+      --border: #2a2a2e;
+    }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Top bar */
+    .topbar {
+      width: 100%;
+      padding: 16px 24px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .dot.error { background: #ff4466; animation: none; }
+    .dot.done  { background: var(--accent); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.8); }
+    }
+
+    .topbar span {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .topbar a {
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: auto;
+      opacity: .7;
+      transition: opacity .2s;
+    }
+    .topbar a:hover { opacity: 1; }
+
+    /* Loading state */
+    .loader {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader p {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    /* Error state */
+    .error-state {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .error-state h2 {
+      font-size: 22px;
+      color: #ff4466;
+    }
+
+    .error-state p {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 500px;
+      line-height: 1.6;
+    }
+
+    .error-state button {
+      margin-top: 8px;
+      padding: 10px 28px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .error-state button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0, 224, 158, .25);
+    }
+
+    /* Rendered content container */
+    #render-target {
+      width: 100%;
+      flex: 1;
+      display: none;
+    }
+
+    #render-target iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">Fetching content…</span>
+    <a href="https://github.com/idkxen2/xenproxy/blob/main/index.html" target="_blank" rel="noopener">View source</a>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Retrieving remote page…</p>
+  </div>
+
+  <div class="error-state" id="error-state">
+    <h2>Failed to load</h2>
+    <p id="error-msg">Could not fetch the remote content. This might be due to a network issue or CORS restrictions on the source.</p>
+    <button onclick="fetchAndRender()">Retry</button>
+  </div>
+
+  <div id="render-target">
+    <iframe id="content-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  </div>
+
+  <script>
+    const SOURCE_URL = 'https://raw.githubusercontent.com/idkxen2/xenproxy/refs/heads/main/index.html';
+
+    const statusDot   = document.getElementById('status-dot');
+    const statusText  = document.getElementById('status-text');
+    const loader      = document.getElementById('loader');
+    const errorState  = document.getElementById('error-state');
+    const errorMsg    = document.getElementById('error-msg');
+    const renderTarget = document.getElementById('render-target');
+    const contentFrame = document.getElementById('content-frame');
+
+    function showLoader() {
+      loader.style.display = 'flex';
+      errorState.style.display = 'none';
+      renderTarget.style.display = 'none';
+      statusDot.className = 'dot';
+      statusText.textContent = 'Fetching content…';
+    }
+
+    function showError(msg) {
+      loader.style.display = 'none';
+      errorState.style.display = 'flex';
+      renderTarget.style.display = 'none';
+      statusDot.className = 'dot error';
+      statusText.textContent = 'Error';
+      if (msg) errorMsg.textContent = msg;
+    }
+
+    function showContent(html) {
+      loader.style.display = 'none';
+      errorState.style.display = 'none';
+      renderTarget.style.display = 'block';
+      statusDot.className = 'dot done';
+      statusText.textContent = 'Rendered';
+
+      /* Write the fetched HTML into the sandboxed iframe so its scripts/styles
+         are scoped and don't conflict with this host page. */
+      const doc = contentFrame.contentDocument || contentFrame.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+
+    async function fetchAndRender() {
+      showLoader();
+
+      try {
+        const resp = await fetch(SOURCE_URL);
+
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+        }
+
+        const html = await resp.text();
+
+        if (!html || html.trim().length === 0) {
+          throw new Error('The fetched resource appears to be empty.');
+        }
+
+        showContent(html);
+      } catch (err) {
+        let msg = err.message;
+        if (err instanceof TypeError && msg.includes('fetch')) {
+          msg = 'Network error or CORS restriction prevented the request. Try opening this page from a local server or check your connection.';
+        }
+        showError(msg);
+      }
+    }
+
+    /* Kick it off */
+    fetchAndRender();
+  </script>
+</body>
+</html>
